@@ -1,0 +1,27 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: check-merge-conflict
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: check-case-conflict
+        exclude: (^.gitignore)|(^goose-notes/)
+    -   id: end-of-file-fixer
+        exclude: (^.gitignore)|(^goose-notes/)
+    -   id: trailing-whitespace
+        exclude: (^.gitignore)|(^goose-notes/)
+#-   repo: https://github.com/astral-sh/ruff-pre-commit
+#    rev: v0.1.13
+#    hooks:
+#    -   id: ruff
+#        args: [--fix, --exit-non-zero-on-fix]
+#        exclude: (^etc/)
+#    -   id: ruff-format
+#-   repo: local
+#    hooks:
+#    -   id: pyright
+#        name: pyright
+#        entry: bash -c "pyright"
+#        language: system
+#        pass_filenames: false

@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "pyxy"
+version = "0.1.0"
+description = ""
+authors = ["treykeown <2755914+treykeown@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+htpy = "^24.6.1"
+parso = "^0.8.4"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.4.0"
+pytest = "^8.0.0"
+#ruff = "^0.4.2"
+#pyright = "^1.1.347"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+#[tool.ruff]
+#line-length = 120
+#ignore-init-module-imports = true
+
+#[tool.pyright]
+#reportUnnecessaryCast = true
+#reportUnnecessaryTypeIgnoreComment = true
