@@ -10,3 +10,6 @@ if __name__ == "__main__":
 
     print("\ntest.scripts.basic3")
     import test.scripts.basic3  # noqa
+
+    print("\ntest.scripts.basic4")
+    import test.scripts.basic4  # noqa

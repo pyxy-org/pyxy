@@ -53,13 +53,3 @@ def is_node(item: parso.tree.NodeOrLeaf, kind: str | None = None) -> TypeGuard[p
     if kind is not None and item.type != kind:
         return False
     return True
-
-
-def format_attr(attr: str | tuple[str, str]):
-    if isinstance(attr, tuple):
-        name, value = attr
-        # TODO: Fix this
-        if not isinstance(value, str) or (not value.startswith('"') and not value.startswith("'")):
-            value = repr(value)
-        return f"{name!r}: {value}"
-    return f"{attr!r}: True"

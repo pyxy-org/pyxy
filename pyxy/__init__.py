@@ -3,18 +3,14 @@ from __future__ import annotations
 import codecs
 import enum
 import re
-from collections import deque
-from dataclasses import dataclass
+from collections import deque, defaultdict
 from encodings import utf_8
-from typing import Self
 
 import parso.python.tree
 import parso.tree
 
-from .util import split_list, is_node, is_leaf, chain_lookup, line_col_to_index, format_attr
-
-type XmlName = str
-type XmlAttrValue = str
+from .data import Tag, CloseTag, CData, PyData
+from .util import split_list, is_node, is_leaf, chain_lookup, line_col_to_index
 
 
 def inject_htpy(transformed_source: str) -> str:
@@ -24,74 +20,24 @@ def inject_htpy(transformed_source: str) -> str:
     return transformed_source[:index] + "import htpy as _pyxy_htpy\n" + transformed_source[index:]
 
 
+def format_attr(attr: str | tuple[str, str]):
+    if not isinstance(attr, tuple):
+        return f"{attr!r}: True"
+
+    attr_name, attr_value = attr
+    if isinstance(attr_value, PyData):
+        attr_value = attr_value.value
+    else:
+        assert isinstance(attr_value, str)
+        attr_value = repr(attr_value)
+    return f"{attr_name!r}: {attr_value}"
+
+
 class XmlParserState(enum.Enum):
     INITIAL = enum.auto()
     TAG_CONTENTS = enum.auto()
     TAG_CONTENTS_CLOSING = enum.auto()
     TAG_OR_CDATA = enum.auto()
-
-
-@dataclass(frozen=True)
-class Tag:
-    name: str
-    attrs: tuple[str | tuple[str, str], ...]
-    self_closing: bool
-
-    @classmethod
-    def build(cls, decoded: str, contents: list[parso.tree.Leaf], self_closing: bool) -> Self:
-        attrs: list[XmlName | tuple[XmlName, XmlAttrValue]] = list()
-        parts = split_list(contents, lambda c: is_leaf(c, value="="))
-        last_attr_name: str | None = None
-
-        for part in parts:
-            name_parts = part
-            if is_leaf(part[0], kind="string"):
-                assert last_attr_name is not None
-                attrs.pop()
-                attrs.append((last_attr_name, part[0].value))
-                last_attr_name = None
-                name_parts = part[1:]
-
-            if name_parts:
-                name_start = line_col_to_index(decoded, *name_parts[0].start_pos)
-                name_end = line_col_to_index(decoded, *name_parts[-1].end_pos)
-                joined_name = decoded[name_start:name_end]
-                split_names = joined_name.split(" ")
-                extra_names = split_names[:-1]
-                real_name = split_names[-1]
-                attrs.extend(extra_names)
-                attrs.append(real_name)
-                last_attr_name = real_name
-
-        tag_name = attrs[0]
-        assert isinstance(tag_name, str)
-
-        return Tag(tag_name, tuple(attrs[1:]), self_closing=self_closing)
-
-
-@dataclass(frozen=True)
-class CloseTag:
-    name: str
-
-    @classmethod
-    def build(cls, decoded: str, contents: list[parso.tree.Leaf]) -> CloseTag:
-        name_start = line_col_to_index(decoded, *contents[0].start_pos)
-        name_end = line_col_to_index(decoded, *contents[-1].end_pos)
-        joined_name = decoded[name_start:name_end]
-        assert " " not in joined_name
-        return CloseTag(joined_name)
-
-
-@dataclass(frozen=True)
-class CData:
-    value: str
-
-    @classmethod
-    def build(cls, decoded: str, contents: list[parso.tree.Leaf]) -> CData:
-        content_start = line_col_to_index(decoded, *contents[0].start_pos)
-        content_end = line_col_to_index(decoded, *contents[-1].end_pos)
-        joined_content = decoded[content_start:content_end]
-        return CData(joined_content)
 
 
 def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
@@ -101,7 +47,7 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
     current_tag_is_closing: bool = False
     current_tag_contents: list = list()
     current_cdata: list = list()
-    entries: list[Tag | CloseTag | CData] = list()
+    entries: list[Tag | CloseTag | CData | PyData] = list()
 
     while queue:
         item = queue.popleft()
@@ -151,11 +97,16 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
             case XmlParserState.TAG_OR_CDATA:
                 if is_leaf(item, value="<"):
                     if current_cdata:
-                        entries.append(CData.build(decoded, current_cdata.copy()))
+                        entries.append(CData.build(decoded, start_item=current_cdata[0], end_item=item))
                         current_cdata.clear()
                     state = XmlParserState.TAG_CONTENTS
                 elif is_leaf(item):
                     current_cdata.append(item)
+                elif is_node(item, kind="fstring_expr"):
+                    if current_cdata:
+                        entries.append(CData.build(decoded, start_item=current_cdata[0], end_item=item))
+                        current_cdata.clear()
+                    entries.append(PyData.build(decoded, item.children))
                 elif is_node(item):
                     current_cdata.extend(item.children)
                 else:
@@ -164,19 +115,43 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
     # Build code from the list of entries
     tag_stack = list()
     built_code = ""
+    empty = defaultdict(lambda: True)
+    sibling_data = False
     for entry in entries:
         if isinstance(entry, Tag):
+            if not empty[tuple(tag_stack)]:
+                built_code += ", "
+            empty[tuple(tag_stack)] = False
+
             ending = ""
             if not entry.self_closing:
                 tag_stack.append(entry)
                 ending = "["
             built_code += f"getattr(_pyxy_htpy, {entry.name!r})({{{", ".join(format_attr(a) for a in entry.attrs)}}}){ending}"
+            sibling_data = False
         elif isinstance(entry, CloseTag):
             assert entry.name == tag_stack[-1].name
             tag_stack.pop()
             built_code += "]"
+            sibling_data = False
         elif isinstance(entry, CData):
+            if sibling_data:
+                built_code += " + "
+            elif not empty[tuple(tag_stack)]:
+                built_code += ", "
+            empty[tuple(tag_stack)] = False
+
             built_code += repr(entry.value)
+            sibling_data = True
+        elif isinstance(entry, PyData):
+            if sibling_data:
+                built_code += " + "
+            elif not empty[tuple(tag_stack)]:
+                built_code += ", "
+            empty[tuple(tag_stack)] = False
+
+            built_code += f"str({entry.value})"
+            sibling_data = True
         else:
             assert False
 

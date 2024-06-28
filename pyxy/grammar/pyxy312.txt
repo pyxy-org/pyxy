@@ -170,7 +170,9 @@ fstring_format_spec: ':' fstring_content*
 
 # This doesn't parse xml, just tokenizes things that look like xml-ish
 xml: '<' xml_opened
-xml_opened: xml_tag_content ('/' '>' | '>' ('{' NAME '}' | xml_cdata)* '<' ('/' xml_tag_content '>' | xml_opened ('<' xml_opened)* '<' '/' xml_tag_content '>'))
+xml_opened: xml_tag_content ('/' '>' |
+                             '>' (fstring_expr | xml_cdata)* '<' ('/' xml_tag_content '>' |
+                                                                  xml_opened ('<' xml_opened)* '<' '/' xml_tag_content '>'))
 xml_name: (NAME | NUMBER | xml_cdata_keywords | ':' | '-' | '.')
 xml_tag_content: ( xml_name xml_name* '=' (STRING | fstring_expr) |
                    xml_name xml_name* )+
@@ -178,7 +180,10 @@ xml_tag_content: ( xml_name xml_name* '=' (STRING | fstring_expr) |
 # This is a hack - we want to consume ALL the tokens, except for '<', '>', '\', '{', and '}'... so we list them all out
 # We also disallow staring with ')' and ']' for now
 xml_cdata_special: NAME | NUMBER | strings | NEWLINE | INDENT | DEDENT
-xml_cdata_keywords: 'False' | 'None' | 'True' | 'and' | 'as' | 'assert' | 'async' | 'await' | 'break' | 'class' | 'continue' | 'def' | 'del' | 'elif' | 'else' | 'except' | 'finally' | 'for' | 'from' | 'global' | 'if' | 'import' | 'in' | 'is' | 'lambda' | 'nonlocal' | 'not' | 'or' | 'pass' | 'raise' | 'return' | 'try' | 'while' | 'with' | 'yield'
+xml_cdata_keywords: ( 'False' | 'None' | 'True' | 'and' | 'as' | 'assert' | 'async' | 'await' | 'break' | 'class' |
+                      'continue' | 'def' | 'del' | 'elif' | 'else' | 'except' | 'finally' | 'for' | 'from' | 'global' |
+                      'if' | 'import' | 'in' | 'is' | 'lambda' | 'nonlocal' | 'not' | 'or' | 'pass' | 'raise' |
+                      'return' | 'try' | 'while' | 'with' | 'yield' )
 xml_cdata_trigraph: '//=' | '**=' | '...'
 xml_cdata_digraph: '->' | '**' | '==' | '!=' | ':=' | '//' | '+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^='
 xml_cdata_ascii: '!' | '#' | '$' | '%' | '&' | '(' | '*' | '+' | ',' | '-' | '.' | '/' | ':' | ';' | '=' | '?' | '@' | '[' | '^' | '`' | '|' | '~'
