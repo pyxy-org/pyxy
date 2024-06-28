@@ -10,7 +10,7 @@
 `pyxy` is lets you put HTML in Python. Right now there are two approaches for this:
 
 * Raw Markup - XML directly in source code (like JSX)
-* Tagged Strings - More powerful f-strings, for HTML. Doesn't break any existing Python tooling.
+* Tagged Strings - More powerful f-strings that can do arbitrary transformations (including things useful for HTML). Doesn't break any existing Python tooling.
 
 ## Raw Markup
 
@@ -59,7 +59,7 @@ The advantage to this is that all existing tooling will continue to work without
 Here's an example:
 
 ```python
-from pyxy.tagstr import html
+from pyxy.tagstr import tagstr, html
 
 def is_logged_in() -> bool:
     return False
@@ -67,7 +67,7 @@ def is_logged_in() -> bool:
 animal_images = ["cat.png", "dog.png", "cow.png"]
 status_image = "logged-in.png" if is_logged_in() else "logged-out.png"
 
-@html
+@tagstr(html)
 def demo():
     return F'''
         <div>
