@@ -24,3 +24,6 @@ if __name__ == "__main__":
 
     print_heading("test/scripts/basic5.py")
     import test.scripts.basic5  # noqa
+
+    print_heading("test/scripts/basic6.py")
+    import test.scripts.basic6  # noqa
