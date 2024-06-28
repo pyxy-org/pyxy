@@ -7,7 +7,10 @@
 </p>
 <hr>
 
-`pyxy` is lets you put HTML in Python. Right now there are two approaches for this: raw markup and tagged strings.
+`pyxy` is lets you put HTML in Python. Right now there are two approaches for this:
+
+* Raw Markup - XML directly in source code (like JSX)
+* Tagged Strings - More powerful f-strings, for HTML. Doesn't break any existing Python tooling.
 
 ## Raw Markup
 
