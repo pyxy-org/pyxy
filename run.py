@@ -1,4 +1,4 @@
-import pyxy  # noqa
+import pyxy.coding  # noqa
 
 def print_heading(script_name: str) -> None:
     print("\n\n========================================")
