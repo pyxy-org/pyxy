@@ -1,15 +1,23 @@
 import pyxy  # noqa
 
+def print_heading(script_name: str) -> None:
+    print("\n\n========================================")
+    print(f"{script_name.replace('/', '.')[:-3]}")
+    print("----------------------------------------")
+    with open(script_name, "rb") as fh:
+        print(fh.read().decode("pyxy"))
+    print("----------------------------------------")
+
 
 if __name__ == "__main__":
-    print("\ntest.scripts.basic1")
+    print_heading("test/scripts/basic1.py")
     import test.scripts.basic1  # noqa
 
-    print("\ntest.scripts.basic2")
+    print_heading("test/scripts/basic2.py")
     import test.scripts.basic2  # noqa
 
-    print("\ntest.scripts.basic3")
+    print_heading("test/scripts/basic3.py")
     import test.scripts.basic3  # noqa
 
-    print("\ntest.scripts.basic4")
+    print_heading("test/scripts/basic4.py")
     import test.scripts.basic4  # noqa

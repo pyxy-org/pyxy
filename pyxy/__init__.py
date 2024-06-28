@@ -29,7 +29,7 @@ def format_attr(attr: str | tuple[str, str]):
         attr_value = attr_value.value
     else:
         assert isinstance(attr_value, str)
-        attr_value = repr(attr_value)
+        attr_value = attr_value
     return f"{attr_name!r}: {attr_value}"
 
 

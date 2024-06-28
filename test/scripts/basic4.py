@@ -1,4 +1,6 @@
 # coding: pyxy
 
-a = <div class={1}>Hello, world!</div>
-print(a)
+test_cls = "test"
+name = "world"
+el = <div class={test_cls}>Hello, {name}!</div>
+print(el)
