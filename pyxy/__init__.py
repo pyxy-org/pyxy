@@ -3,16 +3,18 @@ from __future__ import annotations
 import codecs
 import enum
 import re
-from collections import deque, defaultdict
+from collections import deque
 from dataclasses import dataclass
 from encodings import utf_8
-from typing import Any, TypeGuard
+from typing import Self
 
-import parso  # noqa
 import parso.python.tree
 import parso.tree
 
-type _TextPos = tuple[int, int]
+from .util import split_list, is_node, is_leaf, chain_lookup, line_col_to_index, format_attr
+
+type XmlName = str
+type XmlAttrValue = str
 
 
 def inject_htpy(transformed_source: str) -> str:
@@ -22,24 +24,6 @@ def inject_htpy(transformed_source: str) -> str:
     return transformed_source[:index] + "import htpy as _pyxy_htpy\n" + transformed_source[index:]
 
 
-def split_list(lst, func):
-    result = []
-    current = []
-
-    for item in lst:
-        if func(item):
-            if current:
-                result.append(current)
-            current = []
-        else:
-            current.append(item)
-
-    if current:
-        result.append(current)
-
-    return result
-
-
 class XmlParserState(enum.Enum):
     INITIAL = enum.auto()
     TAG_CONTENTS = enum.auto()
@@ -47,18 +31,16 @@ class XmlParserState(enum.Enum):
     TAG_OR_CDATA = enum.auto()
 
 
-type XmlName = str
-type XmlAttrValue = str
-
-
 @dataclass(frozen=True)
 class Tag:
-    contents: list[parso.tree.Leaf]
+    name: str
+    attrs: tuple[str | tuple[str, str], ...]
     self_closing: bool
 
-    def normalize(self, decoded: str) -> NormalizedTag:
+    @classmethod
+    def build(cls, decoded: str, contents: list[parso.tree.Leaf], self_closing: bool) -> Self:
         attrs: list[XmlName | tuple[XmlName, XmlAttrValue]] = list()
-        parts = split_list(self.contents, lambda c: is_leaf(c, value="="))
+        parts = split_list(contents, lambda c: is_leaf(c, value="="))
         last_attr_name: str | None = None
 
         for part in parts:
@@ -84,85 +66,32 @@ class Tag:
         tag_name = attrs[0]
         assert isinstance(tag_name, str)
 
-        return NormalizedTag(tag_name, tuple(attrs[1:]), self_closing=self.self_closing)
+        return Tag(tag_name, tuple(attrs[1:]), self_closing=self_closing)
 
 
 @dataclass(frozen=True)
-class ClosingTag:
-    contents: list[parso.tree.Leaf]
+class CloseTag:
+    name: str
 
-    def normalize(self, decoded: str) -> NormalizedClosingTag:
-        name_start = line_col_to_index(decoded, *self.contents[0].start_pos)
-        name_end = line_col_to_index(decoded, *self.contents[-1].end_pos)
+    @classmethod
+    def build(cls, decoded: str, contents: list[parso.tree.Leaf]) -> CloseTag:
+        name_start = line_col_to_index(decoded, *contents[0].start_pos)
+        name_end = line_col_to_index(decoded, *contents[-1].end_pos)
         joined_name = decoded[name_start:name_end]
         assert " " not in joined_name
-        return NormalizedClosingTag(joined_name)
+        return CloseTag(joined_name)
 
 
 @dataclass(frozen=True)
 class CData:
-    contents: list[parso.tree.Leaf]
-
-    def normalize(self, decoded: str) -> NormalizedCData:
-        content_start = line_col_to_index(decoded, *self.contents[0].start_pos)
-        content_end = line_col_to_index(decoded, *self.contents[-1].end_pos)
-        joined_content = decoded[content_start:content_end]
-        return NormalizedCData(joined_content)
-
-
-@dataclass(frozen=True)
-class NormalizedTag:
-    name: str
-    attrs: tuple[str | tuple[str, str], ...]
-    self_closing: bool
-
-
-@dataclass(frozen=True)
-class NormalizedClosingTag:
-    name: str
-
-
-@dataclass(frozen=True)
-class NormalizedCData:
     value: str
 
-
-type NormalizedItems = NormalizedTag | NormalizedClosingTag | NormalizedCData
-
-
-def line_col_to_index(text: str, line: int, col: int):
-    lines = text.splitlines(True)  # Keep line breaks
-    index = sum(len(lines[i]) for i in range(line - 1)) + col
-    return index
-
-
-def is_leaf(item: parso.tree.NodeOrLeaf, kind: str | None = None, value: str | None = None) -> TypeGuard[parso.tree.Leaf]:
-    if not isinstance(item, parso.tree.Leaf):
-        return False
-    if value is not None and item.value != value:
-        return False
-    if kind is not None and item.type != kind:
-        return False
-    return True
-
-
-def is_node(item: parso.tree.NodeOrLeaf, kind: str | None = None) -> TypeGuard[parso.tree.BaseNode]:
-    if not isinstance(item, parso.tree.BaseNode):
-        return False
-    if kind is not None and item.type != kind:
-        return False
-    return True
-
-
-def chain_lookup(some_dict, keys):
-    result = some_dict
-    for key in keys:
-        result = result[key]
-    return result
-
-
-def recursive_defaultdict():
-    return defaultdict(recursive_defaultdict)
+    @classmethod
+    def build(cls, decoded: str, contents: list[parso.tree.Leaf]) -> CData:
+        content_start = line_col_to_index(decoded, *contents[0].start_pos)
+        content_end = line_col_to_index(decoded, *contents[-1].end_pos)
+        joined_content = decoded[content_start:content_end]
+        return CData(joined_content)
 
 
 def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
@@ -172,7 +101,7 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
     current_tag_is_closing: bool = False
     current_tag_contents: list = list()
     current_cdata: list = list()
-    entries: list[Tag | ClosingTag | CData] = list()
+    entries: list[Tag | CloseTag | CData] = list()
 
     while queue:
         item = queue.popleft()
@@ -212,9 +141,9 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
                 else:
                     assert False
                 if not current_tag_is_closing:
-                    entries.append(Tag(current_tag_contents.copy(), self_closing=self_closing))
+                    entries.append(Tag.build(decoded, current_tag_contents.copy(), self_closing=self_closing))
                 else:
-                    entries.append(ClosingTag(current_tag_contents.copy()))
+                    entries.append(CloseTag.build(decoded, current_tag_contents.copy()))
                 current_tag_contents.clear()
                 current_tag_is_closing = False
                 state = XmlParserState.TAG_OR_CDATA
@@ -222,7 +151,7 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
             case XmlParserState.TAG_OR_CDATA:
                 if is_leaf(item, value="<"):
                     if current_cdata:
-                        entries.append(CData(current_cdata.copy()))
+                        entries.append(CData.build(decoded, current_cdata.copy()))
                         current_cdata.clear()
                     state = XmlParserState.TAG_CONTENTS
                 elif is_leaf(item):
@@ -232,35 +161,26 @@ def transform_xml_node(node: parso.python.tree.PythonNode, decoded: str) -> str:
                 else:
                     assert False
 
-    normal_entries = [e.normalize(decoded) for e in entries]
+    # Build code from the list of entries
     tag_stack = list()
     built_code = ""
-    for normal_entry in normal_entries:
-        if isinstance(normal_entry, NormalizedTag):
+    for entry in entries:
+        if isinstance(entry, Tag):
             ending = ""
-            if not normal_entry.self_closing:
-                tag_stack.append(normal_entry)
+            if not entry.self_closing:
+                tag_stack.append(entry)
                 ending = "["
-            built_code += f"getattr(_pyxy_htpy, {normal_entry.name!r})({{{", ".join(format_attr(a) for a in normal_entry.attrs)}}}){ending}"
-        elif isinstance(normal_entry, NormalizedClosingTag):
-            assert normal_entry.name == tag_stack[-1].name
+            built_code += f"getattr(_pyxy_htpy, {entry.name!r})({{{", ".join(format_attr(a) for a in entry.attrs)}}}){ending}"
+        elif isinstance(entry, CloseTag):
+            assert entry.name == tag_stack[-1].name
             tag_stack.pop()
             built_code += "]"
-        elif isinstance(normal_entry, NormalizedCData):
-            built_code += repr(normal_entry.value)
+        elif isinstance(entry, CData):
+            built_code += repr(entry.value)
         else:
             assert False
 
     return built_code
-
-
-def format_attr(attr: str | tuple[str, str]):
-    if isinstance(attr, tuple):
-        name, value = attr
-        if not isinstance(value, str) or (not value.startswith('"') and not value.startswith("'")):
-            value = repr(value)
-        return f"{name!r}: {value}"
-    return f"{attr!r}: True"
 
 
 def pyxy_decode(input: bytes | memoryview, errors: str = 'strict') -> tuple[str, int]:
@@ -269,16 +189,21 @@ def pyxy_decode(input: bytes | memoryview, errors: str = 'strict') -> tuple[str,
     if isinstance(input, memoryview):
         input = bytes(input)
 
+    # First, convert bytes to str. Assumes utf-8.
     decoded = input.decode('utf-8', errors=errors)
 
+    # Then, parse the code
     pyxy_grammar = parso.load_grammar(path=str(Path(__file__).parent / "grammar" / "pyxy312.txt"))
     parsed: parso.tree.BaseNode = pyxy_grammar.parse(decoded)
 
+    # Find all instances of an xml node. Keep track of where we should cut and paste in the generated code.
     replacements: list[tuple[int, int, str]] = list()
     tree_search: list[parso.tree.NodeOrLeaf] = [parsed]
     while tree_search:
         node = tree_search.pop(0)
         if isinstance(node, (parso.tree.ErrorNode, parso.tree.ErrorLeaf)):
+            # from pprint import pprint
+            # pprint(parsed.children[0].children)
             raise Exception(f"error node: {node}")
         if isinstance(node, parso.tree.Leaf):
             continue
@@ -292,16 +217,21 @@ def pyxy_decode(input: bytes | memoryview, errors: str = 'strict') -> tuple[str,
                 transform_xml_node(node, decoded)
             ))
 
-    result: list[str] = list()
+    # Paste in the replacements
+    result_items: list[str] = list()
     last_end = 0
     for replacement in replacements:
         rp_start, rp_end, rp_text = replacement
-        result.append(decoded[last_end:rp_start])
-        result.append(rp_text)
+        result_items.append(decoded[last_end:rp_start])
+        result_items.append(rp_text)
         last_end = rp_end
-    result.append(decoded[last_end:len(decoded)])
+    result_items.append(decoded[last_end:len(decoded)])
 
-    return inject_htpy("".join(result)), len(input)
+    # Join the items and inject the htpy import
+    joined_result_items = "".join(result_items)
+    result = inject_htpy(joined_result_items)
+
+    return result, len(input)
 
 
 class PyxyStreamReader(utf_8.StreamReader):

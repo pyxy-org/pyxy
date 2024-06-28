@@ -171,7 +171,7 @@ fstring_format_spec: ':' fstring_content*
 # This doesn't parse xml, just tokenizes things that look like xml-ish
 xml: '<' xml_opened
 xml_opened: xml_tag_content ('/' '>' | '>' ('{' NAME '}' | xml_cdata)* '<' ('/' xml_tag_content '>' | xml_opened ('<' xml_opened)* '<' '/' xml_tag_content '>'))
-xml_name: (NAME | ':' | '-' | '.')
+xml_name: (NAME | NUMBER | xml_cdata_keywords | ':' | '-' | '.')
 xml_tag_content: ( xml_name xml_name* '=' (STRING | fstring_expr) |
                    xml_name xml_name* )+
 
