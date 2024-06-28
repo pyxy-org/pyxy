@@ -1,69 +1,66 @@
 import ast
+import functools
 import inspect
 import re
 import textwrap
-from dataclasses import dataclass
 from typing import Callable, Any, Iterable
 
 from .util import line_col_to_index
 
 
-def html[C: Callable](func: C | None = None) -> C:
+def tagstr[C: Callable](transformer: Callable[..., str]) -> C:
     def wrap(wrap_func: Callable) -> Callable:
-        return transform_function(wrap_func)
+        return _transform_function(wrap_func, transformer)
 
-    return wrap if func is None else wrap(func)
+    return wrap
 
 
-def string_handler_inner(*args: Any):
+def html(*args: Any):
     stringified_args = list()
     for arg in args:
         if isinstance(arg, Iterable) and not isinstance(arg, (str, bytes)):
-            stringified_args.extend(string_handler_inner(*arg))
+            stringified_args.extend(html(*arg))
         else:
             # TODO: Need to make this more correct
             if stringified_args and stringified_args[-1].endswith("="):
                 stringified_args.append(repr(arg))
             else:
                 stringified_args.append(str(arg))
-    return "".join(stringified_args)
+    return textwrap.dedent("".join(stringified_args)).strip()
 
 
-def string_handler(arg_getter: Callable):
-    # print(f"string_handler for {arg_getter=}")
-    return textwrap.dedent(string_handler_inner(arg_getter())).strip()
+def _transformer_entry(arg_getter: Callable, transformer: Callable[..., str]):
+    return transformer(arg_getter())
 
 
-@dataclass
-class FormattedValueContainer:
-    formatted_value: ast.FormattedValue
+class _StripTagstrDecorator(ast.NodeTransformer):
+    def __init__(self, transformer: Callable[..., str]):
+        self.transformer = transformer
 
-
-class StripHtmlDecorators(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
-        node.decorator_list = [d for d in node.decorator_list if not (isinstance(d, ast.Name) and d.id == html.__name__)]
+        node.decorator_list = [d for d in node.decorator_list if not (isinstance(d, ast.Call) and d.func.id == tagstr.__name__)]
         return node
 
 
-def transform_function[C: Callable](func: C) -> C:
+def _transform_function[C: Callable](func: C, transformer: Callable[..., str]) -> C:
     source = inspect.getsource(func)
     tree = ast.parse(source)
 
-    modified_tree = JoinedStrReplacer(source).visit(tree)
-    modified_tree = StripHtmlDecorators().visit(modified_tree)
+    modified_tree = _JoinedStrReplacer(source).visit(tree)
+    modified_tree = _StripTagstrDecorator(transformer).visit(modified_tree)
     ast.fix_missing_locations(modified_tree)
     # print(ast.dump(modified_tree))
 
     code = compile(modified_tree, filename="<transformed>", mode="exec")
     func_globals = func.__globals__.copy()
-    func_globals["_pyxy_string_handler"] = string_handler
+    func_globals["_pyxy_string_handler"] = functools.partial(_transformer_entry, transformer=transformer)
 
     namespace = {}
     exec(code, func_globals, namespace)
     return namespace[func.__name__]
 
 
-class JoinedStrReplacer(ast.NodeTransformer):
+class _JoinedStrReplacer(ast.NodeTransformer):
     def __init__(self, source: str):
         super().__init__()
         self.source = source
@@ -84,7 +81,7 @@ class JoinedStrReplacer(ast.NodeTransformer):
 
         list_node = ast.List(
             elts=[
-                JoinedStrReplacer(self.source).visit(n.value if isinstance(n, ast.FormattedValue) else n)
+                _JoinedStrReplacer(self.source).visit(n.value if isinstance(n, ast.FormattedValue) else n)
                 for n in node.values
             ],
             ctx=ast.Load()
