@@ -1,8 +1,6 @@
 # coding: pyxy
 
-
 logged_in = False
-
 some_class = "wrapper"
 name = "world"
 
