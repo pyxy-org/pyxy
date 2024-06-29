@@ -96,14 +96,14 @@ print(demo())
 
 ### HTML-in-Python Implementations
 * [dropbox/pyxl](https://github.com/dropbox/pyxl) - The original
-* [gvanrossum/pyxl3](https://github.com/gvanrossum/pyxl3)
-* [pyxl4/pyxl4](https://github.com/pyxl4/pyxl4)
-* [twidi/mixt](https://github.com/twidi/mixt)
-* [michaeljones/packed](https://github.com/michaeljones/packed)
+* [gvanrossum/pyxl3](https://github.com/gvanrossum/pyxl3) - Python 3 support
+* [pyxl4/pyxl4](https://github.com/pyxl4/pyxl4) - A fork created when `pyxl3` was no longer maintained
+* [twidi/mixt](https://github.com/twidi/mixt) - Another fork of Pyxl with a lot of features
+* [michaeljones/packed](https://github.com/michaeljones/packed) - A unique effort that uses decorators and a compilation step
 
 #### Syntax Support 
-* [christoffer/pycharm-pyxl](https://github.com/christoffer/pycharm-pyxl)
-* [yyjhao/sublime-pyxl](https://github.com/yyjhao/sublime-pyxl)
+* [christoffer/pycharm-pyxl](https://github.com/christoffer/pycharm-pyxl) - Pyxl support for PyCharm
+* [yyjhao/sublime-pyxl](https://github.com/yyjhao/sublime-pyxl) - Pyxl syntax highlighting for Sublime Text
 
 ### HTML-in-* Implementations
 * [ECMAScript 4 XML (E4X)](https://en.wikipedia.org/wiki/ECMAScript_for_XML) - The oldest example I can find of XML being embedded in another language (2004!)
