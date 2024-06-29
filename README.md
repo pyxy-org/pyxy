@@ -25,7 +25,7 @@ This uses a standard Python parser (provided by `parso`), but with a [custom gra
 
 This is still very much a work-in-progress. Here's a minimal example:
 
-```
+```python
 # coding: pyxy
 
 def is_logged_in() -> bool:
