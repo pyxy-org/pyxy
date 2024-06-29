@@ -54,7 +54,7 @@ print(demo())
 ### Tagged Strings
 
 I've also been experimenting with tagged strings. This is similar to [what's being planned for a future PEP](https://github.com/jimbaker/tagstr/blob/main/pep.rst).
-It some `ast` magic to automatically replace any **uppercase** f-strings (`F'...'`) with behavior similar to what's described in the PEP.
+It uses some `ast` magic to automatically replace any **uppercase** f-strings (`F'...'`) with behavior similar to what's described in the PEP.
 
 The advantage to this is that all existing tooling will continue to work without any modifications.
 
