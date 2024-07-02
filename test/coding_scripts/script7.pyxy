@@ -1,0 +1,16 @@
+# coding: pyxy
+
+import builtins
+
+builtins.print("hello")
+
+<pre>
+a = (
+    <div id="foo">
+        <img src="test.png" />
+    </div>
+)
+</pre>
+
+if True:
+    print(1)

@@ -11,19 +11,19 @@ def print_heading(script_name: str) -> None:
 
 if __name__ == "__main__":
     print_heading("test/scripts/basic1.py")
-    import test.scripts.basic1  # noqa
+    import test.coding_scripts.basic1  # noqa
 
     print_heading("test/scripts/basic2.py")
-    import test.scripts.basic2  # noqa
+    import test.coding_scripts.basic2  # noqa
 
     print_heading("test/scripts/basic3.py")
-    import test.scripts.basic3  # noqa
+    import test.coding_scripts.basic3  # noqa
 
     print_heading("test/scripts/basic4.py")
-    import test.scripts.basic4  # noqa
+    import test.coding_scripts.basic4  # noqa
 
     print_heading("test/scripts/basic5.py")
-    import test.scripts.basic5  # noqa
+    import test.coding_scripts.basic5  # noqa
 
     print_heading("test/scripts/basic6.py")
-    import test.scripts.basic6  # noqa
+    import test.coding_scripts.basic6  # noqa
