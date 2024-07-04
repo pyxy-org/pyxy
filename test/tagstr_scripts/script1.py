@@ -6,13 +6,13 @@ def is_logged_in() -> bool:
 animal_images = ["cat.png", "dog.png", "cow.png"]
 status_image = "logged-in.png" if is_logged_in() else "logged-out.png"
 
-@tagstr(html)
+@tagstr(html, target='f')
 def demo():
-    return F'''
+    return f'''
         <div>
             <img src={status_image}>
             <ul>
-                {(F'<li><img src={image_file}></li>' for image_file in animal_images)}
+                {(f'<li><img src={image_file}></li>' for image_file in animal_images)}
             </ul>
         </div>
     '''

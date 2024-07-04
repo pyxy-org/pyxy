@@ -172,7 +172,7 @@ fstring_format_spec: ':' fstring_content*
 xml: '<' xml_opened
 xml_opened: xml_tag_content ('/' '>' |
                              '>' (fstring_expr | xml_cdata)* '<' ('/' xml_tag_content '>' |
-                                                                  xml_opened ('<' xml_opened)* '<' '/' xml_tag_content '>'))
+                                                                  xml_opened (('<' xml_opened) | (fstring_expr | xml_cdata))* '<' '/' xml_tag_content '>'))
 xml_name: (NAME | NUMBER | xml_cdata_keywords | ':' | '-' | '.')
 xml_tag_content: ( xml_name xml_name* '=' (STRING | fstring_expr) |
                    xml_name xml_name* )+
@@ -186,8 +186,6 @@ xml_cdata_keywords: ( 'False' | 'None' | 'True' | 'and' | 'as' | 'assert' | 'asy
                       'return' | 'try' | 'while' | 'with' | 'yield' )
 xml_cdata_trigraph: '//=' | '**=' | '...'
 xml_cdata_digraph: '->' | '**' | '==' | '!=' | ':=' | '//' | '+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^='
-xml_cdata_ascii: '!' | '#' | '$' | '%' | '&' | '(' | '*' | '+' | ',' | '-' | '.' | '/' | ':' | ';' | '=' | '?' | '@' | '[' | '^' | '`' | '|' | '~'
+xml_cdata_ascii: '!' | '#' | '$' | '%' | '&' | '*' | '+' | ',' | '-' | '.' | '/' | ':' | ';' | '=' | '?' | '@' | '^' | '`' | '|' | '~'
 
-xml_cdata_start: xml_cdata_special | xml_cdata_keywords | xml_cdata_trigraph | xml_cdata_digraph | xml_cdata_ascii
-xml_cdata_non_start: ')' | ']'
-xml_cdata: xml_cdata_start (xml_cdata_start | xml_cdata_non_start)*
+xml_cdata: xml_cdata_special | xml_cdata_keywords | xml_cdata_trigraph | xml_cdata_digraph | xml_cdata_ascii

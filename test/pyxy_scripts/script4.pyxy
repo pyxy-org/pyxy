@@ -1,5 +1,3 @@
-# coding: pyxy
-
 test_cls = "test"
 name = "world"
 el = <div class={test_cls}>Hello, {name}!</div>

@@ -1,5 +1,3 @@
-# coding: pyxy
-
 def is_logged_in() -> bool:
     return False
 

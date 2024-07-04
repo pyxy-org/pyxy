@@ -1,16 +1,13 @@
-# coding: pyxy
-
 import builtins
-
 builtins.print("hello")
 
-<pre>
-a = (
+html = <pre>
+a = &lpar;
     <div id="foo">
         <img src="test.png" />
     </div>
-)
+&rpar;
 </pre>
 
-if True:
-    print(1)
+if __name__ == "__main__":
+    print(html)

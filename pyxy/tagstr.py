@@ -8,9 +8,9 @@ from typing import Callable, Any, Iterable
 from .util import line_col_to_index
 
 
-def tagstr[C: Callable](transformer: Callable[..., str]) -> C:
+def tagstr[C: Callable](transformer: Callable[..., str], *, target: str = "F") -> C:
     def wrap(wrap_func: Callable) -> Callable:
-        return _transform_function(wrap_func, transformer)
+        return _transform_function(target, wrap_func, transformer)
 
     return wrap
 
@@ -42,11 +42,11 @@ class _StripTagstrDecorator(ast.NodeTransformer):
         return node
 
 
-def _transform_function[C: Callable](func: C, transformer: Callable[..., str]) -> C:
+def _transform_function[C: Callable](target: str, func: C, transformer: Callable[..., str]) -> C:
     source = inspect.getsource(func)
     tree = ast.parse(source)
 
-    modified_tree = _JoinedStrReplacer(source).visit(tree)
+    modified_tree = _JoinedStrReplacer(source, target).visit(tree)
     modified_tree = _StripTagstrDecorator(transformer).visit(modified_tree)
     ast.fix_missing_locations(modified_tree)
     # print(ast.dump(modified_tree))
@@ -61,9 +61,10 @@ def _transform_function[C: Callable](func: C, transformer: Callable[..., str]) -
 
 
 class _JoinedStrReplacer(ast.NodeTransformer):
-    def __init__(self, source: str):
+    def __init__(self, source: str, target: str):
         super().__init__()
         self.source = source
+        self.target = target
 
     def _trim_string(self, input_string):
         match = re.search(r"[\"']", input_string)
@@ -74,14 +75,14 @@ class _JoinedStrReplacer(ast.NodeTransformer):
     def visit_JoinedStr(self, node):
         start_idx = line_col_to_index(self.source, node.lineno, node.col_offset)
         string_spec = self._trim_string(self.source[start_idx:start_idx+3])
-        if "F" not in string_spec:
+        if string_spec != self.target:
             return node
 
         # print(f"Replacing {node=}")
 
         list_node = ast.List(
             elts=[
-                _JoinedStrReplacer(self.source).visit(n.value if isinstance(n, ast.FormattedValue) else n)
+                _JoinedStrReplacer(self.source, self.target).visit(n.value if isinstance(n, ast.FormattedValue) else n)
                 for n in node.values
             ],
             ctx=ast.Load()
