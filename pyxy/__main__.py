@@ -9,24 +9,24 @@ from pyxy.lang import PyxyTranspiler
 
 
 @arguably.command
-def __root__(target: str | None, *, verbose: bool = False) -> None:
+def __root__(target: str | None = None, *, quiet: bool = False) -> None:
     """
     :param target: file to convert or directory to recursively convert
-    :param verbose: [-v] verbose output
+    :param quiet: [-q] suppress unnecessary output
     """
     if target is None:
         target = os.getcwd()
     input_path = Path(target)
-    if not input_path.is_file():
-        convert_file(input_path, verbose)
+    if input_path.is_file():
+        convert_file(input_path, quiet)
     elif input_path.is_dir():
         for file_path in find_pyxy_files(input_path):
-            convert_file(file_path, verbose)
+            convert_file(file_path, quiet)
     else:
         print(f"Bad input: {target}")
         sys.exit(1)
 
-def convert_file(filepath: Path, verbose: bool) -> None:
+def convert_file(filepath: Path, quiet: bool) -> None:
     if not filepath.suffix == ".pyxy":
         print(f"Only pyxy files should be passed as input")
         return
@@ -39,7 +39,7 @@ def convert_file(filepath: Path, verbose: bool) -> None:
     with out_path.open("w") as fh:
         fh.write(py_output)
 
-    if verbose:
+    if not quiet:
         print(f"Converted {filepath} to {out_path}")
 
 
