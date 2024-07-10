@@ -1,2 +1,3 @@
-el = <custom-tag disabled custom-attr="blue">asdf 2378409 asdf</custom-tag>
+def custom(**kwargs): ...
+el = <custom disabled custom-attr="blue">asdf 2378409 asdf</custom>
 print(el)

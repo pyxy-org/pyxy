@@ -17,10 +17,14 @@ def outer():
 """.strip("\n")
 
 
+# No ()[] allowed due to how the tokenizer handles them
+safe_pi_script = (pi_script
+                  .replace("(", "&lpar;")
+                  .replace(")", "&rpar;"))
 pyxy_script = f"""
 def outer():
     node = <div>Hello {{value}}!</div>
-    node2 = <pre>{pi_script}</pre>
+    node2 = <pre>{safe_pi_script}</pre>
 """
 
 
