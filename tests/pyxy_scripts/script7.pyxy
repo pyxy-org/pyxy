@@ -9,5 +9,4 @@ a = &lpar;
 &rpar;
 </pre>
 
-if __name__ == "__main__":
-    print(html)
+print(html)

@@ -168,7 +168,9 @@ fstring_conversion: '!' NAME
 fstring_expr: '{' (testlist_comp | yield_expr) ['='] [ fstring_conversion ] [ fstring_format_spec ] '}'
 fstring_format_spec: ':' fstring_content*
 
-# This doesn't parse xml, just tokenizes things that look like xml-ish
+########################################################################################################################
+# Added for pyxy
+
 xml: '<' xml_opened
 xml_opened: xml_tag_content ('/' '>' |
                              '>' (fstring_expr | xml_cdata)* '<' ('/' xml_tag_content '>' |
