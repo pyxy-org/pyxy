@@ -1,5 +1,3 @@
-tests/pyxy_scripts/*.py
-
 .ruff_cache/
 coverage.json
 
