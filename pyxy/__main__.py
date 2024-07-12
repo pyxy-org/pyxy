@@ -9,7 +9,7 @@ from pyxy.lang import PyxyTranspiler
 
 
 @arguably.command
-def __root__(target: str | None = None, *, quiet: bool = False) -> None:
+def __root__(target: str | None = None, *, quiet: bool = False, no_map: bool = False) -> None:
     """
     :param target: file to convert or directory to recursively convert
     :param quiet: [-q] suppress unnecessary output
@@ -18,15 +18,15 @@ def __root__(target: str | None = None, *, quiet: bool = False) -> None:
         target = os.getcwd()
     input_path = Path(target)
     if input_path.is_file():
-        convert_file(input_path, quiet)
+        convert_file(input_path, quiet, not no_map)
     elif input_path.is_dir():
         for file_path in find_pyxy_files(input_path):
-            convert_file(file_path, quiet)
+            convert_file(file_path, quiet, not no_map)
     else:
         print(f"Bad input: {target}")
         sys.exit(1)
 
-def convert_file(filepath: Path, quiet: bool) -> None:
+def convert_file(filepath: Path, quiet: bool, mapping: bool) -> None:
     if not filepath.suffix == ".pyxy":
         print(f"Only pyxy files should be passed as input")
         return
@@ -34,10 +34,16 @@ def convert_file(filepath: Path, quiet: bool) -> None:
     with filepath.open("r") as fh:
         pyxy_input = fh.read()
 
-    py_output = PyxyTranspiler(pyxy_input).run()
+    transpiler = PyxyTranspiler(pyxy_input)
+    py_output = transpiler.run()
     out_path = filepath.with_suffix(".py")
     with out_path.open("w") as fh:
         fh.write(py_output)
+
+    if mapping:
+        map_path = filepath.with_name("." + filepath.name).with_suffix(".map")
+        with map_path.open("w") as fh:
+            fh.write(transpiler.dump_map())
 
     if not quiet:
         print(f"Converted {filepath} to {out_path}")

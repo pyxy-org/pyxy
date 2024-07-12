@@ -1,2 +1,3 @@
 *.py
+*.map
 !__init__.py

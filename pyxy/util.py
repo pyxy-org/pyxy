@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from typing import TypeGuard
 
 import parso.python.tree
@@ -74,6 +75,23 @@ class PatchedString:
         self._patches.append((start, end, new_value))
         self._patches.sort()
 
+    def get_mapping(self) -> OrderedDict[tuple[int, int], tuple[int, int]]:
+        result = OrderedDict()
+        src_idx = 0
+        dst_idx = 0
+        for patch in self._patches:
+            patch_start, patch_end, patch_value = patch
+            if src_idx < patch_start:
+                unpatched_len = patch_start - src_idx
+                result[(dst_idx, dst_idx + unpatched_len)] = (src_idx, src_idx + unpatched_len)
+                src_idx += unpatched_len
+                dst_idx += unpatched_len
+            assert src_idx == patch_start
+            result[(dst_idx, dst_idx + len(patch_value))] = (patch_start, patch_end)
+            dst_idx += len(patch_value)
+            src_idx = patch_end
+        return result
+
     def __getitem__(self, item):
         assert isinstance(item, slice)
         assert item.step is None or item.step == 1
@@ -96,3 +114,6 @@ class PatchedString:
 
     def __str__(self):
         return self[0:]
+
+    def __len__(self):
+        return len(str(self))

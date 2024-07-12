@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import json
 import re
 from abc import ABC
 from collections import deque, defaultdict
@@ -293,3 +294,10 @@ class PyxyTranspiler:
         self.inject_imports()
 
         return str(self.string)
+
+    def dump_map(self) -> str:
+        mapping = self.string.get_mapping()
+        to_serialize: list[tuple[tuple, tuple]] = list()
+        for key, value in mapping.items():
+            to_serialize.append((key, value))
+        return json.dumps(to_serialize)
