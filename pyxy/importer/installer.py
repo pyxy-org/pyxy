@@ -9,7 +9,7 @@ def install(*, dev: bool = False):
     with open(pth_file_path, 'w') as file:
         if dev:
             file.write(str(Path(__file__).parent.parent.parent) + "\n")
-        file.write(f'import pyxy.pyxyimport.hook\n')
+        file.write(f'import pyxy.importer.hook\n')
 
 
 def uninstall():

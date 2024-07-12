@@ -8,30 +8,47 @@ class PyxyToPyLoader(Loader):
     def __init__(self, name, path):
         self.name = name
         self.path = path
+        self.py_filename = f"{self.path}.py"
+        self.pyxy_filename = f"{self.path}.pyxy"
+
+    def _compile_pyxy(self):
+        pyxy_modified = os.path.getmtime(self.pyxy_filename) > os.path.getmtime(self.py_filename)
+        if not os.path.exists(self.py_filename) or pyxy_modified:
+            from pyxy.lang import PyxyTranspiler
+
+            # print(f"regenerating {py_filename}")
+            with open(self.pyxy_filename, 'r') as file:
+                contents = file.read()
+
+            converted = PyxyTranspiler(contents).run()
+
+            with open(self.py_filename, 'w') as file:
+                file.write(converted)
 
     def create_module(self, spec):
         return None
 
     def exec_module(self, module):
-        pyxy_filename = f"{self.path}.pyxy"
-        py_filename = f"{self.path}.py"
-
-        if (not os.path.exists(py_filename) or
-                os.path.getmtime(pyxy_filename) > os.path.getmtime(py_filename)):
-            from pyxy.lang import PyxyTranspiler
-
-            # print(f"regenerating {py_filename}")
-            with open(pyxy_filename, 'r') as file:
-                contents = file.read()
-
-            converted = PyxyTranspiler(contents).run()
-
-            with open(py_filename, 'w') as file:
-                file.write(converted)
+        self._compile_pyxy()
 
         # Execute the generated Python file in the module's namespace
-        with open(py_filename, 'r') as file:
+        with open(self.py_filename, 'r') as file:
             exec(file.read(), module.__dict__)
+
+    def get_code(self, fullname):
+        self._compile_pyxy()
+
+        with open(self.py_filename, 'r') as file:
+            return compile(file.read(), self.py_filename, 'exec')
+
+    def get_source(self, fullname):
+        self._compile_pyxy()
+
+        with open(self.py_filename, 'r') as file:
+            return file.read()
+
+    def is_package(self, fullname):
+        return False
 
 
 class PyxyToPyFinder(MetaPathFinder):

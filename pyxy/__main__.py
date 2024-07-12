@@ -9,7 +9,7 @@ from pyxy.lang import PyxyTranspiler
 
 
 @arguably.command
-def convert(target: str | None = None, *, quiet: bool = False) -> None:
+def __root__(target: str | None = None, *, quiet: bool = False) -> None:
     """
     :param target: file to convert or directory to recursively convert
     :param quiet: [-q] suppress unnecessary output
@@ -25,16 +25,6 @@ def convert(target: str | None = None, *, quiet: bool = False) -> None:
     else:
         print(f"Bad input: {target}")
         sys.exit(1)
-
-@arguably.command
-def install(*, dev: bool = False):
-    import pyxy.pyxyimport
-    pyxy.pyxyimport.install(dev=dev)
-
-@arguably.command
-def uninstall():
-    import pyxy.pyxyimport
-    pyxy.pyxyimport.uninstall()
 
 def convert_file(filepath: Path, quiet: bool) -> None:
     if not filepath.suffix == ".pyxy":
