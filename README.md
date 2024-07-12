@@ -3,7 +3,7 @@
 
 <p align="center">
     <em>
-        HTML in Python
+        HTML in Python<br><br><b>work-in-progress<br>contributions appreciated</b>
     </em>
 </p>
 <hr>
