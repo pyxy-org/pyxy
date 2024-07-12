@@ -43,6 +43,11 @@ print(demo())
 <div><img src="logged-out.png"><ul><li><img src="cat.png"></li><li><img src="dog.png"></li><li><img src="cow.png"></li></ul></div>
 ```
 
+## IDE Support
+
+* [PyCharm Plugin](https://plugins.jetbrains.com/plugin/24817-pyxy-support/)
+* [Sublime Text syntax highlighting](https://github.com/pyxy-org/sublime-pyxy)
+
 ## See also
 
 ### HTML-in-Python Implementations
