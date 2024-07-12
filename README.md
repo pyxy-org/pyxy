@@ -8,7 +8,7 @@
 </p>
 <hr>
 
-`pyxy` is lets you put HTML directly in Python code. You can think of it as JSX for Python.
+`pyxy` lets you put HTML directly in Python code. You can think of it as JSX for Python.
 It builds on the fantastic work of [pyxl](https://github.com/dropbox/pyxl), which is a similar project predating JSX.
 Compared to pyxl, it takes a new approach that makes other tools do most of the work:
 
