@@ -1,5 +1,10 @@
 import builtins
+import builtins
 builtins.print("hello")
+
+from textwrap import *
+
+a: str = 1
 
 html = <pre>
 a = &lpar;

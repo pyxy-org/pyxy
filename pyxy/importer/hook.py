@@ -2,6 +2,9 @@ import importlib.util
 import os
 import sys
 from importlib.abc import Loader, MetaPathFinder
+from pathlib import Path
+
+from pyxy.main import convert_file
 
 
 class PyxyToPyLoader(Loader):
@@ -12,18 +15,7 @@ class PyxyToPyLoader(Loader):
         self.pyxy_filename = f"{self.path}.pyxy"
 
     def _compile_pyxy(self):
-        pyxy_modified = os.path.getmtime(self.pyxy_filename) > os.path.getmtime(self.py_filename)
-        if not os.path.exists(self.py_filename) or pyxy_modified:
-            from pyxy.lang import PyxyTranspiler
-
-            # print(f"regenerating {py_filename}")
-            with open(self.pyxy_filename, 'r') as file:
-                contents = file.read()
-
-            converted = PyxyTranspiler(contents).run()
-
-            with open(self.py_filename, 'w') as file:
-                file.write(converted)
+        convert_file(Path(self.pyxy_filename), quiet=True, mapping=True)
 
     def create_module(self, spec):
         return None

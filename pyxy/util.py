@@ -32,6 +32,22 @@ def line_col_to_index(text: str, line: int, col: int):
     return index
 
 
+def index_to_line_col(text, index):
+    lines = text.splitlines()
+    line_number = 0
+    total_chars = 0
+
+    for line in lines:
+        total_line_length = len(line) + 1  # +1 for newline character
+        if total_chars + total_line_length > index:
+            col_number = index - total_chars
+            return line_number + 1, col_number + 1
+        total_chars += total_line_length
+        line_number += 1
+
+    raise Exception("Index out of range")
+
+
 def chain_lookup(some_dict, keys):
     result = some_dict
     for key in keys:

@@ -12,4 +12,4 @@ def uninstall():
     _uninstall()
 
 if __name__ == "__main__":
-    arguably.run(name="pyxyimport")
+    arguably.run(name="pyxy.importer")
