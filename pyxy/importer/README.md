@@ -1,4 +1,4 @@
-# pyxyimport
+# pyxy.importer
 
 Automatically converts a .pyxy file to .py, then imports that. Inspired by [pyximport](https://github.com/cython/cython/tree/master/pyximport).
 
