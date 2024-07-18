@@ -12,10 +12,8 @@
 It builds on the fantastic work of [pyxl](https://github.com/dropbox/pyxl), which is a similar project predating JSX.
 Compared to pyxl, it takes a new approach that makes other tools do most of the work:
 
-* `parso` provides the tokenization and parsing
+* `parso` provides the tokenization and parsing, using a [custom grammar](https://github.com/pyxy-org/pyxy/blob/5494493ffc105f1cc8103b58ea56fda3d89fc4fe/pyxy/grammar/pyxy312.txt#L171-L193) to enable handling XML
 * `htpy` is used to rebuild markup
-
-This uses a standard Python parser (provided by `parso`), but with a [custom grammar](https://github.com/pyxy-org/pyxy/blob/5494493ffc105f1cc8103b58ea56fda3d89fc4fe/pyxy/grammar/pyxy312.txt#L171-L193) to enable handling XML.
 
 Here's a minimal example:
 
@@ -47,6 +45,14 @@ print(demo())
 
 * [PyCharm Plugin](https://plugins.jetbrains.com/plugin/24817-pyxy-support/)
 * [Sublime Text syntax highlighting](https://github.com/pyxy-org/sublime-pyxy)
+* VSCode - not yet supported, see https://github.com/pyxy-org/pyxy/issues/10
+
+## Tool support
+
+* `ruff` - partial support, see https://github.com/pyxy-org/pyxy/issues/8
+* `mypy` - not yet supported, see https://github.com/pyxy-org/pyxy/issues/9
+* `pyright` - not yet supported, see https://github.com/pyxy-org/pyxy/issues/11
+* `black` - not yet supported, see https://github.com/pyxy-org/pyxy/issues/7
 
 ## See also
 
@@ -57,6 +63,13 @@ print(demo())
 * [twidi/mixt](https://github.com/twidi/mixt) - Another fork of Pyxl with a lot of features
 * [michaeljones/packed](https://github.com/michaeljones/packed) - A unique effort that uses decorators and a compilation step
 * [pelme/htpy](https://github.com/pelme/htpy) - Not HTML-in-Python, but close. A great solution to generating HTML with Python
+* [RudreshVeerkhare/ReactPy](https://github.com/RudreshVeerkhare/ReactPy) - Another implementation of HTML in Python
+
+#### Using tagged strings
+
+* [rmorshea/tagstr](https://github.com/rmorshea/tagstr)
+* [jviide/htm.py](https://github.com/jviide/htm.py)
+* [treykeown/taglit](https://github.com/treykeown/taglit)
 
 #### Syntax Support 
 * [christoffer/pycharm-pyxl](https://github.com/christoffer/pycharm-pyxl) - Pyxl support for PyCharm
@@ -73,4 +86,4 @@ print(demo())
 * [LuaX](https://bvisness.me/luax/) - HTML in Lua
 * [gccx](https://github.com/mbasso/gccx) - HTML in C++
 * [rux](https://github.com/camertron/rux) - HTML in Ruby
-* [php](https://www.php.net/) - heh
+* [php](https://www.php.net/)
