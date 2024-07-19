@@ -1,9 +1,10 @@
 import shutil
 import sys
+from pathlib import Path
 
 import pyxy.main
-from pyxy.run.mapping import remap_sarif
 from pyxy.run.tools import TOOL_HANDLERS
+from pyxy.run.util import PyxyRemapper
 
 
 def main(args: list[str]):
@@ -23,11 +24,12 @@ def main(args: list[str]):
         sys.exit(1)
 
     pyxy.main.main(quiet=True)
-    status, output = TOOL_HANDLERS[tool](tool_args)
+    tool_result = TOOL_HANDLERS[tool](tool_args)
 
-    output = remap_sarif(output)
+    for error in tool_result.errors:
+        # TODO: Don't instantiate this every time
+        remapper = PyxyRemapper.from_py_file(Path(error.filename))
+        line, column = remapper.py_to_pyxy(error.line, error.column)
+        print(f"{remapper.pyxy_path}:{line}:{column} - {error.message}")
 
-    # sys.stdout.write(output)
-    # sys.stdout.flush()
-
-    sys.exit(status)
+    sys.exit(tool_result.status)
